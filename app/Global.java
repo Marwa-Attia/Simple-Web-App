@@ -5,7 +5,7 @@ import org.mongodb.morphia.Morphia;
 import play.GlobalSettings;
 import play.Logger;
 
-import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
 
 import controllers.MorphiaObject;
 
@@ -16,7 +16,7 @@ public class Global extends GlobalSettings {
 		super.beforeStart(arg0);
 		Logger.debug("** onStart **"); 
 		try {
-			MorphiaObject.mongo = new Mongo("127.0.0.1", 27017);
+			MorphiaObject.mongo =new  MongoClient("127.0.0.1", 27017);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
