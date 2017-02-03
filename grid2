@@ -1,0 +1,75 @@
+import { Component, Input,OnInit,ElementRef} from '@angular/core';
+import {ColumnComponent} from './column.component';
+import {WFGridPager} from './wfGridPager.directive';
+@Component({
+    selector: 'wf-grid',
+    template:   '<div class = "wf-grid-table">' +
+                    '<div *ngIf="enablePaging">'+
+                        '<wf-grid-paging [list]=dataset></wf-grid-paging>'+
+                    '</div>'+
+                    '<div class="wf-table-body">' +
+                        '<table class="wf-table-content table table-bordered table-hover table-condensed table-striped" *ngIf="enablePaging">' +
+                            '<tr class="wf-grid-header-group-row">' +
+                                '<th class="wf-grid-header-col" *ngFor="let col of colDef">{{col.header}}</th>' +
+                            '</tr>' +
+                            '<tbody class="wf-grid-rows">' +
+                                '<tr class="wf-grid-data-group-row" *ngFor="let rec of dataset  | slice:pager.pageStart:pager.pageEnd+1">' +
+                                    '<td class="wf-grid-data-col" *ngFor="let col of colDef"><label id="{{rec[col.value]}}">{{rec[col.value]}}</label> </td>' +
+                                '</tr>' +
+                            '</tbody>' +
+                        '</table>' +
+                        '<table class="wf-table-content table table-bordered table-hover table-condensed table-striped" *ngIf="!enablePaging">' +
+                            '<tr class="wf-grid-header-group-row">' +
+                                '<th class="wf-grid-header-col" *ngFor="let col of colDef">{{col.header}}</th>' +
+                            '</tr>' +
+                            '<tbody class="wf-grid-rows">' +
+                                '<tr class="wf-grid-data-group-row" *ngFor="let rec of dataset">' +
+                                    '<td class="wf-grid-data-col" *ngFor="let col of colDef">{{rec[col.value]}}</td>' +
+                                '</tr>' +
+                            '</tbody>' +
+                        '</table>' +
+                    '</div>'+
+                '</div>'
+                 
+
+})
+export class WFGrid implements OnInit {
+    //colDef: ColumnComponent[] = [];
+   @Input() colDef: Column[] = [];
+    pager: WFGridPager
+    @Input() dataset: any;
+    @Input() enablePaging: boolean = false;
+    //@Input() options: GridOptions={ enablePaging: false };
+//    addColumn(column: ColumnComponent) {
+//        this.colDef.push(column);
+//    }
+    //<a>{{rec[col.value]}}</a>
+    initPager(p: WFGridPager) {
+        console.log("Grid initPager");
+        this.pager = p;
+    }
+    ngOnInit() {
+        
+        console.log("Grid ngOnInit");
+console.log(document);
+    }
+}
+
+export class GridOptions {
+    enablePaging: boolean = false;
+}
+
+
+export class Column  {
+   value:string;
+    header:string;
+      //@ViewChild('cellTemplate') cellTemplate:ElementRef ;
+    cellTemplate :ElementRef;
+    constructor(table: WFGrid) {
+           table.addColumn(this)
+       
+    }
+    
+     
+    
+}
