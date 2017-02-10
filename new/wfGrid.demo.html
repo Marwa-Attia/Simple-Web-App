@@ -1,0 +1,36 @@
+
+<div>
+	<div class="grid-label-big-lined">
+		<label>WFGrid Demo </label>
+	</div>
+
+	<wf-grid [detail]="dataset"  [colDef]="colDef" (loader)="alert()" > 
+	
+		<!-- <column [value]="'id'" [header]="'Id'">
+			 <a>{{dataset[this.value]}}</a>
+		</column> 
+		<column [value]="'city'"[header]="'City'"></column> 
+		<column [value]="'country'"[header]="'Country'"></column>  -->
+	</wf-grid>
+	
+	 <form #deForm="ngForm">
+    <div>
+      <label for="testRec">Record Count</label>
+    </div>
+    <div>
+      <input type="text" id="testRec" name="testRec"
+        [(ngModel)]="testRec" 
+        wfFilter="^[0-9]*$" #A7a="ngModel" />
+    </div>
+    <div
+      *ngIf="A7a.errors && (A7a.dirty || A7a.touched)"
+      class="alert alert-danger">
+      
+      <div [hidden]="!A7a.errors.pattern">Record Count must
+        be a number.</div>
+     
+    </div>
+    </form>
+<column [header]="'Hi'" [value]="'No'">test</column>
+<div [column]="wfCol"></div>
+</div>
