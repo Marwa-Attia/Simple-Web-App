@@ -1,0 +1,140 @@
+<div class="wf-grid-table">
+
+	<!-- Pager Section top -->
+	<div *ngIf="detail.enablePaging">
+		<wf-grid-paging [pagerInfo]=detail.paging></wf-grid-paging>
+	</div>
+	<!-- Pager Section top End-->
+
+	<!-- Header Section -->
+	<div class="table-header" *ngIf="!detail.hideHeader">
+		<span *ngIf="detail.enableTableExpandCollapse"> 
+			<a  style="text-decoration: none; color: #ffffff;" (click)="expandCollapse()"> 
+				<span *ngIf="!tableBodyExpanded" class="icon-large default icon-expand"></span> 
+				<span *ngIf="tableBodyExpanded" class="icon-large default icon-collapse"> </span>
+			</a> 
+			<span class="title" [innerHTML]="detail.title"></span>
+		</span> 
+		<span *ngIf="!detail.enableTableExpandCollapse" class="title" [innerHTML]="detail.title"></span>
+	</div>
+	<!-- Header section End -->
+
+	<!-- Main Grid Section-->
+	<div class="wf-table-body" *ngIf="(( detail.enableTableExpandCollapse && tableBodyExpanded) || !detail.enableTableExpandCollapse) && !detail.hideGrid">
+		
+		<!--Grid With both Paging and sorting enabled using internal(Client Side) implementation for both-->
+		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped"
+			*ngIf="(detail.enablePaging && !detail.useExternalPaging && detail.enableSorting && !detail.useExternalSorting)">
+			<tr class="wf-grid-header-group-row">
+				<th class="column-header sortable" *ngFor="let col of detail.colDef"><div *ngIf="col.sortable" (click)="sortColumn(col.value);" class="sort">
+						<i class="icon-sort{{sortIcon}} icon-large default"></i>
+					</div>{{col.header}}</th>
+			</tr>
+			<tbody class="wf-grid-rows">
+				<tr class="wf-grid-data-group-row" *ngFor="let row of detail.data | orderBy: [orderByField] | slice:pager.pageStart-1 :pager.pageEnd; let i = index;let c = count">
+					<td class="wf-grid-data-col" *ngFor="let col of detail.colDef"> <wf-data-cell [value]="row[col.value]" [template]="col.cellTemplate"></wf-data-cell></td>
+				</tr>
+			</tbody>
+		</table>
+		<!--Grid With both Paging and sorting enabled using internal(Client Side) implementation for both End-->
+
+		<!--Gird with only grouping Filter-->
+		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped"
+			*ngIf="(detail.enableGrouping &&((!detail.enablePaging && !detail.enableSorting)||(!detail.enablePaging  && detail.enableSorting  && detail.useExternalSorting )||(!detail.enableSorting && detail.enablePaging && detail.useExternalPaging)||(detail.enablePaging && detail.useExternalPaging && detail.enableSorting && detail.useExternalSorting)))">
+			<tr class="wf-grid-header-group-row">
+				<th class="wf-grid-header-col" [attr.colspan]="detail.colDef.length"><span>{{detail.groupInfo.displayName}}</span></th>
+			</tr>
+			<tr class="wf-grid-header-group-row">
+				<th class="wf-grid-header-col" *ngFor="let col of detail.colDef"><span *ngIf="col.value!=detail.groupInfo.field">{{col.header}}</span></th>
+			</tr>
+
+			<tbody class="wf-grid-data-group-row" *ngFor="let rec of detail.data | groupBy: detail.groupInfo.field ">
+				<tr>
+					<td><wf-data-cell [value]="rec.key" [template]="detail.groupInfo.cellTemplate"></wf-data-cell></td>
+				</tr>
+				<tr *ngFor="let row of rec.value ">
+					<td class="wf-grid-data-col" *ngFor="let col of detail.colDef"><wf-data-cell [value]="row[col.value]" [template]="col.cellTemplate"></wf-data-cell></td>
+				</tr>
+			</tbody>
+		</table>
+		<!--Gird with only grouping Filter End-->
+
+		<!--Gird with only grouping and Paging enabled and using internal(Client Side) implementation for Paging-->
+		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped"
+			*ngIf="(detail.enableGrouping && detail.enablePaging && !detail.useExternalPaging && !(detail.enableSorting && !detail.useExternalSorting) )">
+			<tr class="wf-grid-header-group-row">
+				<th class="wf-grid-header-col" [attr.colspan]="detail.colDef.length"><span>{{detail.groupInfo.displayName}}</span></th>
+			</tr>
+			<tr class="wf-grid-header-group-row">
+				<th class="wf-grid-header-col" *ngFor="let col of detail.colDef"><span *ngIf="col.value!=detail.groupInfo.field">{{col.header}}</span></th>
+			</tr>
+
+			<tbody class="wf-grid-data-group-row" *ngFor="let rec of detail.data| orderBy: [detail.groupInfo.field] | slice:pager.pageStart-1 :pager.pageEnd | groupBy: detail.groupInfo.field  ">
+				<tr>
+					<td>{{rec.key}}</td>
+				</tr>
+				<tr *ngFor="let row of rec.value ">
+					<td class="wf-grid-data-col" *ngFor="let col of detail.colDef">{{row[col.value]}}</td>
+				</tr>
+			</tbody>
+		</table>
+		<!--Gird with only grouping and Paging enabled and using internal(Client Side) implementation for Paging End-->
+
+		<!--Gird with only Paging enabled using internal(Client Side) implementation-->
+		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped"
+			*ngIf="(!detail.enableGrouping && detail.enablePaging && !detail.useExternalPaging && !(detail.enableSorting && !detail.useExternalSorting) )">
+			<tr class="wf-grid-header-group-row">
+				<th class="wf-grid-header-col" *ngFor="let col of detail.colDef">{{col.header}}</th>
+			</tr>
+			<tbody class="wf-grid-rows">
+				<tr class="wf-grid-data-group-row" *ngFor="let row of detail.data |  slice:pager.pageStart-1 :pager.pageEnd ">
+					<td class="wf-grid-data-col" *ngFor="let col of detail.colDef"><wf-data-cell [value]="row[col.value]" [template]="col.cellTemplate"></wf-data-cell></td>
+				</tr>
+			</tbody>
+		</table>
+		<!--Gird with only Paging enabled using internal(Client Side) implementation End-->
+
+		<!--Gird with only Sorting enabled using internal(Client Side) implementation -->
+		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped"
+			*ngIf="(detail.enableSorting && !detail.useExternalSorting  && !(detail.enablePaging && !detail.useExternalPaging))">
+			<tr class="wf-grid-header-group-row">
+				<th class="wf-grid-header-col" *ngFor="let col of detail.colDef"><div *ngIf="col.sortable" (click)="sortColumn(col.value);" class="sort">
+						<i [class]="SORT_CLASS" class="icon-large default">^</i>
+					</div> {{col.header}}</th>
+			</tr>
+			<tbody class="wf-grid-rows">
+				<tr class="wf-grid-data-group-row" *ngFor="let row of detail.data | orderBy: [orderByField]">
+					<td class="wf-grid-data-col" *ngFor="let col of detail.colDef"><wf-data-cell [value]="row[col.value]" [template]="col.cellTemplate"></wf-data-cell></td>
+				</tr>
+			</tbody>
+		</table>
+		<!--Gird with only Sorting enabled using internal(Client Side) implementation End-->
+
+		<!--Default Gird with no additional ngFor Filters-->
+		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped"
+			*ngIf="(!detail.enableGrouping &&((!detail.enablePaging && !detail.enableSorting)||(!detail.enablePaging  && detail.enableSorting  && detail.useExternalSorting )||(!detail.enableSorting && detail.enablePaging && detail.useExternalPaging)||(detail.enablePaging && detail.useExternalPaging && detail.enableSorting && detail.useExternalSorting)))">
+			<tr class="wf-grid-header-group-row">
+				<th class="wf-grid-header-col" *ngFor="let col of detail.colDef">
+					<div *ngIf="col.sortable && detail.enableSorting" (click)="sortColumn(col.value);" class="sort">
+						<i [class]="SORT_CLASS" class="icon-large default"></i>
+					</div> {{col.header}}
+				</th>
+			</tr>
+			<tbody class="wf-grid-rows">
+				<tr class="wf-grid-data-group-row" *ngFor="let row of detail.data">
+					<td class="wf-grid-data-col" *ngFor="let col of detail.colDef"><wf-data-cell [value]="row[col.value]" [template]="col.cellTemplate"></wf-data-cell></td>
+				</tr>
+			</tbody>
+		</table>
+		<!--Default Gird with no additional ngFor Filters End-->
+
+	</div>
+	<!-- Main Grid Section End-->
+	
+	<!-- Pager bottom section -->
+	<div *ngIf="detail.enablePaging && detail.enablePagingBottom">
+        <wf-grid-paging [pagerInfo]=detail.paging></wf-grid-paging>
+  </div>
+  <!-- Pager bottom section End-->
+  
+</div>
