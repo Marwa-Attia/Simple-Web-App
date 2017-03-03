@@ -1,0 +1,883 @@
+Index: src/main/resources/angular_io/app/bootstrap/admin.module.ts
+===================================================================
+--- src/main/resources/angular_io/app/bootstrap/admin.module.ts	(revision 563737)
++++ src/main/resources/angular_io/app/bootstrap/admin.module.ts	(working copy)
+@@ -20,11 +20,8 @@
+ import { ReruneAppFormComponent } from '../views/partial/eApp/rerun-eAppForm.component';
+ 
+ // Directives
+-import { WFTabSet} from '../directives/wfTabSet.directive';
+-import { WFTab} from '../directives/wfTab.directive';
++import { WFGridDemoComponent} from '../demos/wfGrid.demo.component';
+ 
+-import { WFFilterDirective} from '../directives/wfFilter.directive';
+-import { WFCheckList} from '../directives/wfCheckList.directive';
+ import {WFGrid} from '../directives/wfGrid.directive';
+ import {WFGridPager} from '../directives/wfGridPager.directive';
+ import{OrderBy} from '../directives/orderBy.pipe';
+@@ -32,19 +29,22 @@
+ import{WFDataCell} from '../directives/wfCell.component';
+ import{ComponentOutlet} from '../directives/component-outlet';
+ import {provideComponentOutletModule} from '../directives/provider';
+-
+-
++import {OrderByService} from '../directives/orderBy.service';
++import {GroupByService} from '../directives/groupBy.service';
++import {CoreModule} from '../framework/core.module';
++import {CellDirective}from '../directives/wfCell.directive';
++import{ColumnComponent }from '../directives/wfColumn.component';
+ @NgModule({
+-  imports: [
+-       BrowserModule, FormsModule,HttpModule,InMemoryWebApiModule.forRoot(AppMockData)
++  imports: [CoreModule,
++       BrowserModule, FormsModule,HttpModule,InMemoryWebApiModule.forRoot(AppMockData) 
+   ],
+-  declarations: [ WFFilterDirective,WFCheckList,WFTabSet,WFTab ,DeactiveLoanHoganComponent,OrderFloodComponent,VendorSimulation,RemoveActiveEAppFormMilestoneComponent,ResubmiteAppDataComponent,ReruneAppFormComponent,
+-  WFGrid,WFGridPager,OrderBy,GroupBy,WFDataCell,ComponentOutlet,
++  declarations: [ColumnComponent,CellDirective, WFGridDemoComponent , DeactiveLoanHoganComponent , OrderFloodComponent , VendorSimulation , RemoveActiveEAppFormMilestoneComponent , ResubmiteAppDataComponent , ReruneAppFormComponent , WFGrid, WFGridPager , OrderBy , GroupBy , WFDataCell , ComponentOutlet
+       ],
+  
+-  providers: [DeactiveLoanHoganService,OrderFloodService,VendorSimulationService,EAppService,provideComponentOutletModule({})]
++  providers: [GroupByService,OrderByService,DeactiveLoanHoganService,OrderFloodService,VendorSimulationService,EAppService,provideComponentOutletModule({ imports: [CoreModule]})]
+ })
+ export class AdminModule { 
++
+ }
+ 
+ const upgradeAdapter  = new UpgradeAdapter(AdminModule);
+
+Property changes on: src\main\resources\angular_io\app\demos
+___________________________________________________________________
+Added: bugtraq:number
+   + true
+
+Index: src/main/resources/angular_io/app/demos/wfGrid.demo.component.ts
+===================================================================
+--- src/main/resources/angular_io/app/demos/wfGrid.demo.component.ts	(revision 0)
++++ src/main/resources/angular_io/app/demos/wfGrid.demo.component.ts	(revision 0)
+@@ -0,0 +1,150 @@
++import { Component } from '@angular/core';
++import {OrderByService} from '../directives/orderBy.service';
++@Component({
++    selector: 'wf-grid-demo',
++    templateUrl: 'angular_io/app/demos/wfGrid.demo.html'
++})
++
++export class WFGridDemoComponent {
++    wfCol: any = { header: "hello", value: "hi" };
++    testRec: number;
++    records: any[] = [
++        { id: "A", city: "Cairo3", country: "Morocco" },
++        { id: "B", city: "Cairoe", country: "Egypt" },
++        { id: "C", city: "Caiewro", country: "France" },
++        { id: "D", city: "Caiewro", country: "USA" },
++        { id: "E", city: "Ca4iro", country: "Germany" },
++        { id: "F", city: "Caigro", country: "Iceland" },
++        { id: "G", city: "Caiewro", country: "Ireland" },
++        { id: "H", city: "Caiefro", country: "Spain" },
++        { id: "I", city: "Cairo", country: "Egypt" },
++        { id: "J", city: "Caifzxro", country: "Germany" },
++        { id: "K", city: "Casadiro", country: "Egypt" },
++        { id: "L", city: "Caixczzro", country: "Egypt" },
++        { id: "M", city: "Caixro", country: "Iceland" },
++        { id: "N", city: "Cariro", country: "Egypt" },
++        { id: "O", city: "Careiro", country: "Egypt" },
++        { id: "P", city: "Caeriro", country: "Egypt" },
++        { id: "Q", city: "Cadsiro", country: "France" },
++        { id: "R", city: "Caidsadsaro", country: "Morocco" },
++        { id: "S", city: "Cadiro", country: "USA" },
++        { id: "T", city: "Cairo", country: "USA" },
++        { id: "U", city: "Caddiro", country: "Spain" },
++        { id: "V", city: "Cadsairo", country: "Spain" },
++        { id: "W", city: "Cddiro", country: "Egypt" }
++    ];
++    dataset: any = {
++        title: 'Cities',
++        //enablePaging: true,
++        paging: {
++            startIndex: 1,
++            currentPage: 1,
++            totalPages: 5,
++            totalRecords: 253,
++            rowsPerPage: 5,
++            endIndex: 5,
++            oldPage: 0,
++            selectedPageSize: 5
++        },
++        colDef: [{ header: "",  value: "selected", cellTemplate:'<wf-checklist id ="my" [rowObj]="row" [hidden]="false" [disable]="false"  (clickHandler)="self.handlerFire($event)" [checked]="row.selected" [list]="myList"></wf-checklist>',showCheckbox:true},{ header: "ID", value: "id", cellTemplate: '<a (click)="self.handlerFire($event)"> {{value}} </a>', sortable: true , colHandler: this.select}, { header: "City", value: "city", cellTemplate: '<p *ngFor="let i of [1,2,3]"> {{value}} </p>', sortable: true }],
++        enableGrouping: true,
++        groupInfo : {displayName : 'Country', field:'country', cellTemplate: "<a onClick=\"alert('Hi')\"> {{value}} </a>"},
++        enableTableExpandCollapse: true,
++        enablePaging: true,
++        //useExternalPaging: false,
++       // enableSorting: true,
++        //useExternalSorting: false,
++        //enablePagingBottom: true,
++        data: [
++            {selected :false, id: "A", city: "Cairo3", country: "Morocco" },
++            { selected:false,id: "B", city: "Cairoe", country: "Egypt" },
++            {selected:false, id: "C", city: "Caiewro", country: "France" },
++            { selected:false,id: "D", city: "Caiewro", country: "USA" },
++            { selected:false,id: "E", city: "Ca4iro", country: "Germany" },
++            { selected:false, id: "F", city: "Caigro", country: "Iceland" },
++            { selected:false,id: "G", city: "Caiewro", country: "Ireland" },
++            {selected:false, id: "H", city: "Caiefro", country: "Spain" },
++            { selected:false,id: "I", city: "Cairo", country: "Egypt" },
++            { selected:false,id: "J", city: "Caifzxro", country: "Germany" },
++            { selected:false,id: "K", city: "Casadiro", country: "Egypt" },
++            { selected:false,id: "L", city: "Caixczzro", country: "Egypt" },
++            { selected:false,id: "M", city: "Caixro", country: "Iceland" },
++            { selected:false,id: "N", city: "Cariro", country: "Egypt" },
++            {selected:false, id: "O", city: "Careiro", country: "Egypt" },
++            { selected:false,id: "P", city: "Caeriro", country: "Egypt" },
++            { selected:false,id: "Q", city: "Cadsiro", country: "France" },
++            { selected:false,id: "R", city: "Caidsadsaro", country: "Morocco" },
++            { selected:false,id: "S", city: "Cadiro", country: "USA" },
++            { selected:false,id: "T", city: "Cairo", country: "USA" },
++            { selected:false,id: "U", city: "Caddiro", country: "Spain" },
++            { selected:false,id: "V", city: "Cadsairo", country: "Spain" },
++            { selected:false,id: "W", city: "Cddiro", country: "Egypt" },
++           
++        ]
++    };
++    //gridOptions: GridOptions={enablePaging:true};
++    //colDef: any[] = [{ header: "ID", value: "id", cellTemplate: "<a>{{value.cr}}</a>" , sortable:true }, { header: "City", value: "city" ,cellTemplate: "<a>{{value.cr}}</a>",sortable:true}]
++
++rowVal="123";
++    html = '<a>{{value}}</a>';
++    //  currentView: IView = new SalesView();
++    alert(): any {
++        console.log("Alert pager: " + this.dataset.paging.startIndex);
++        console.log("Alert pager: " + this.dataset.paging.endIndex);
++        console.log("Alert pager: " + this.dataset.paging.currentPage);
++        console.log("Alert sortInfo: " + this.dataset.sortInfo);
++        console.log("Alert fields: " + this.dataset.sortInfo.fields);
++        this.dataset = {
++            enablePaging: true,
++            useExternalPaging: false,
++            enableSorting: false,
++            useExternalSorting: false,
++            data: [
++                { id: "F", city: "Cairo", country: "Egypt" },
++                { id: "G", city: "Cairo", country: "Egypt" },
++                { id: "H", city: "Cairo", country: "Egypt" },
++                { id: "I", city: "Cairo", country: "Egypt" },
++                { id: "J", city: "Cairo", country: "Egypt" },
++            ],
++            paging: {
++                startIndex: 6,
++                currentPage: 2,
++                totalPages: 5,
++                totalRecords: 23,
++                rowsPerPage: 5,
++                endIndex: 10,
++                oldPage: 1,
++                selectedPageSize: 5
++            }
++
++        };
++    }
++
++
++    checkbx=false;
++    myList:any[] = ['a', 'b', 'c'];
++    sayHi(): void {
++       console.log(this.records);
++       this.records= OrderByService._sort(this.records,['-id']);
++         console.log(this.records);
++    }
++
++    select(): void {
++        alert('hi');
++    }
++    select2(): void {
++       // alert('main');
++    }
++    deselect(): void {
++       // console.log("b5");
++    }
++}
++
++
++
++
++
++
++
++
++
+Index: src/main/resources/angular_io/app/demos/wfGrid.demo.html
+===================================================================
+--- src/main/resources/angular_io/app/demos/wfGrid.demo.html	(revision 0)
++++ src/main/resources/angular_io/app/demos/wfGrid.demo.html	(revision 0)
+@@ -0,0 +1,64 @@
++
++<div>
++	<div class="grid-label-big-lined">
++		<label>Angular 2 Demo </label>
++	</div>
++
++	 <wf-grid [detail]="dataset"  (loader)="alert()" >  
++		<column [value]="'selected'" [header]="">
++	  <template let-name="name" #cellTemp><wf-checklist id ="my" [rowObj]="name" [hidden]="false" [disable]="false"  [checked]="false" [list]="myList"></wf-checklist></template>
++	  </column>
++		<column [value]="'id'" [header]="'Id'" >
++			<template let-name="name" #cellTemp> <a (click)="sayHi();"> {{[name]}}</a></template>
++		</column> 
++		<column [value]="'city'"[header]="'City'"></column> 
++		<column [value]="'country'"[header]="'Country'"></column> 
++	 </wf-grid>  
++	
++	 <form #deForm="ngForm">
++    <div>
++      <label for="testRec">Record Count</label>
++    </div>
++    <div>
++      <input type="text" id="testRec" name="testRec"
++        [(ngModel)]="testRec" 
++        #Axa="ngModel"  />
++    </div>
++    <label>{{testRec}}</label>
++    <div
++      *ngIf="Axa.errors && (Axa.dirty || Axa.touched)"
++      class="alert alert-danger">
++      
++      <div [hidden]="!Axa.errors.pattern">Record Count must
++        be a number.</div>
++     
++    </div>
++    
++    <button (click)="sayHi();">Click me</button>
++    </form>
++     <wf-tab-set>
++    <wf-tab [tabTitle]="'Tab1'" active="true"> tab1 Content </wf-tab>
++    <wf-tab [tabTitle]="'Tab2'" > tab2 Content </wf-tab>
++    </wf-tab-set> 
++	  <label>Should be here:</label>
++	  
++	  <a (click)="select()" cellTemplate> Click here </a>
++
++      
++ <!--  <wf-tabset class="inboxSectionTab">
++    <wf-tab tabTitle="Main" (selectEvent)="select2($event)">
++    fsdgfds
++        </wf-tab>
++  
++        <wf-tab tabTitle="Errors"   (selectEvent)="select($event)" (deselectEvent)="deselect($event)">
++      Any HTML code in Error tab
++        </wf-tab>
++  
++    </wf-tabset> -->
++<!-- <column [header]="'Hi'" [value]="'No'" [componentData]="componentData"></column>
++
++<div [column]="wfCol"></div>
++<div *ngFor="let row of myList ">
++<wfCell [html]="html" [val]="row"></wfCell> -->
++<!-- <wf-row [id]="'5'"></wf-row> -->
++</div >
+Index: src/main/resources/angular_io/app/directives/core-http.service.ts
+===================================================================
+--- src/main/resources/angular_io/app/directives/core-http.service.ts	(revision 0)
++++ src/main/resources/angular_io/app/directives/core-http.service.ts	(revision 0)
+@@ -0,0 +1,50 @@
++//import {bootstrap} from '@angular/platform-browser-dynamic';
++import {Injectable} from '@angular/core';
++import { Http, Request, RequestOptionsArgs, Response, XHRBackend, RequestOptions, ConnectionBackend, Headers} from '@angular/http';
++import { Router} from '@angular/router';
++//import {LocationStrategy, HashLocationStrategy} from '@angular/common';
++import { Observable } from 'rxjs/Observable';
++//import * as _ from 'lodash'
++import 'rxjs/Rx';
++
++@Injectable()
++export class CoreHttpService extends Http {
++
++    constructor(backend: ConnectionBackend, defaultOptions: RequestOptions, private _router: Router) {
++        super(backend, defaultOptions);
++    }
++
++    request(url: string | Request, options?: RequestOptionsArgs): Observable<Response> {
++        return super.request(url, options);
++    }
++
++    get(url: string, options?: RequestOptionsArgs): Observable<Response> {
++        return super.get(url,options);
++    }
++
++    post(url: string, body: string, options?: RequestOptionsArgs): Observable<Response> {   
++        return super.post(url, body, this.getRequestOptionArgs(options));
++    }
++
++    put(url: string, body: string, options?: RequestOptionsArgs): Observable<Response> {
++        return super.put(url, body, this.getRequestOptionArgs(options));
++    }
++
++    delete(url: string, options?: RequestOptionsArgs): Observable<Response> {
++        return super.delete(url, options);
++    }
++    
++    getRequestOptionArgs(options?: RequestOptionsArgs) : RequestOptionsArgs {
++        if (options == null) {
++            options = new RequestOptions();
++        }
++        if (options.headers == null) {
++            options.headers = new Headers();
++        }
++        options.headers.append('Content-Type', 'application/json');
++        return options;
++    }
++
++   
++}
++
+Index: src/main/resources/angular_io/app/directives/wfCell.component.ts
+===================================================================
+--- src/main/resources/angular_io/app/directives/wfCell.component.ts	(revision 563715)
++++ src/main/resources/angular_io/app/directives/wfCell.component.ts	(working copy)
+@@ -1,22 +1,31 @@
+-import { Component, Input, OnInit, ElementRef, Output, EventEmitter} from '@angular/core';
++import { Component, Input, OnInit, ElementRef, Output, EventEmitter,ContentChild,TemplateRef} from '@angular/core';
+ 
+ import {Column, GridOptions, Page, PagingOtions, SortInfo} from './WFGridUtil';
+ @Component({
+     selector: 'wf-data-cell',
+-    template: '<div *componentOutlet="template; context: self; selector:selector "></div>'
++    template: '<template  [ngTemplateOutlet]="template" [ngOutletContext]="{name:name, value : value, row : row, col: col}"></template>'
+ 
+ 
+ })
+-export class WFDataCell implements OnInit{
++export class WFDataCell {
++    @Input() name: string;
+     @Input() value: string;
+-    @Input() template: string;
++    @Input() template: any;
+     selector= 'template-component';
++    @Input() row :any;
++    @Input() col : string; 
++   // @ContentChild(TemplateRef) template: TemplateRef;
++   // @Output('cellHandler') cellHandler = new EventEmitter(); 
+     self = this;
+ 
+    
+-   ngOnInit() {
+-    this.self = this;
+-  }
+-   
++//   ngOnInit() {
++//    this.self = this;
++//  }
++   handlerFire(){
++       //if(this.cellHandler){
++      // this.cellHandler.emit();
++      // }
++   } 
+ }
+ 
+Index: src/main/resources/angular_io/app/directives/wfCheckList.directive.ts
+===================================================================
+--- src/main/resources/angular_io/app/directives/wfCheckList.directive.ts	(revision 563720)
++++ src/main/resources/angular_io/app/directives/wfCheckList.directive.ts	(working copy)
+@@ -4,7 +4,7 @@
+ from '@angular/core';
+ @Component({
+     selector: 'wf-checklist',
+-    template: '<input type="checkbox"  value ="{{rowObj}}"  [disabled]="disable"  name="cbx"  #cbx="ngModel" id="{{id}}cbx" [(ngModel)]="checked" (change)="changeAction()" >'
++    template: '<input type="checkbox"  value ="{{rowObj}}"  [disabled]="disable"  name="{{id}}"  #{{id}}="ngModel" id="{{id}}" [(ngModel)]="checked" (change)="changeAction()" >'
+ })
+ export class WFCheckList implements OnChanges {
+        @Input('id') id: string;
+@@ -17,7 +17,6 @@
+          console.log('ng2Comp Created'); 
+       }
+     ngOnChanges() {
+-        //this.clickHandler.emit();
+     }
+     changeAction():void{
+        if(this.list){
+@@ -27,6 +26,7 @@
+            }else if(found!=-1 && !this.checked) {
+               this.list.splice(found,1);
+            }
++           console.log('list '+this.list); 
+        }
+         if(this.clickHandler){
+         this.clickHandler.emit();
+Index: src/main/resources/angular_io/app/directives/wfGrid.directive.Template.html
+===================================================================
+--- src/main/resources/angular_io/app/directives/wfGrid.directive.Template.html	(revision 563715)
++++ src/main/resources/angular_io/app/directives/wfGrid.directive.Template.html	(working copy)
+@@ -8,131 +8,77 @@
+ 
+ 	<!-- Header Section -->
+ 	<div class="table-header" *ngIf="!detail.hideHeader">
+-		<span *ngIf="detail.enableTableExpandCollapse"> 
+-			<a  style="text-decoration: none; color: #ffffff;" (click)="expandCollapse()"> 
+-				<span *ngIf="!tableBodyExpanded" class="icon-large default icon-expand"></span> 
++		<span *ngIf="detail.enableTableExpandCollapse">
++			<a style="text-decoration: none; color: #ffffff;" (click)="expandCollapse()">
++				<span *ngIf="!tableBodyExpanded" class="icon-large default icon-expand"></span>
+ 				<span *ngIf="tableBodyExpanded" class="icon-large default icon-collapse"> </span>
+-			</a> 
++			</a>
+ 			<span class="title" [innerHTML]="detail.title"></span>
+-		</span> 
++		</span>
+ 		<span *ngIf="!detail.enableTableExpandCollapse" class="title" [innerHTML]="detail.title"></span>
+ 	</div>
+ 	<!-- Header section End -->
+ 
+ 	<!-- Main Grid Section-->
+ 	<div class="wf-table-body" *ngIf="(( detail.enableTableExpandCollapse && tableBodyExpanded) || !detail.enableTableExpandCollapse) && !detail.hideGrid">
+-		
+-		<!--Grid With both Paging and sorting enabled using internal(Client Side) implementation for both-->
+-		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped"
+-			*ngIf="(detail.enablePaging && !detail.useExternalPaging && detail.enableSorting && !detail.useExternalSorting)">
++	
++		<!--Main Grid with out grouping -->
++		<table *ngIf="!detail.enableGrouping" class="wf-table-content table table-bordered table-hover table-condensed table-striped">
+ 			<tr class="wf-grid-header-group-row">
+-				<th class="column-header sortable" *ngFor="let col of detail.colDef"><div *ngIf="col.sortable" (click)="sortColumn(col);" class="sort">
++				<th class="column-header sortable" *ngFor="let col of detail.colDef">
++					<div  *ngIf="col.showCheckbox"><input type="checkbox" (change)="selectDeselectAll()" [(ngModel)]="col.isChecked" /></div>
++					<div *ngIf="detail.enableSorting && col.sortable" (click)="sortColumn(col);" class="sort">
+ 						<i class="icon-sort{{col.sortIcon}} icon-large default"></i>
+-					</div>{{col.header}}</th>
++					</div>
++					{{col.header}}
++				</th>
+ 			</tr>
+-			<tbody class="wf-grid-rows">
+-				<tr class="wf-grid-data-group-row" *ngFor="let row of detail.data |  slice:pager.pageStart-1 :pager.pageEnd | orderBy: [orderByField] ;">
+-					<td class="wf-grid-data-col" *ngFor="let col of detail.colDef"> <wf-data-cell [value]="row[col.value]" [template]="col.cellTemplate"></wf-data-cell></td>
+-				</tr>
+-			</tbody>
+-		</table>
+-		<!--Grid With both Paging and sorting enabled using internal(Client Side) implementation for both End-->
++			<tbody class="wf-grid-data-group-row">
+ 
+-		<!--Gird with only grouping Filter-->
+-		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped"
+-			*ngIf="(detail.enableGrouping &&((!detail.enablePaging && !detail.enableSorting)||(!detail.enablePaging  && detail.enableSorting  && detail.useExternalSorting )||(!detail.enableSorting && detail.enablePaging && detail.useExternalPaging)||(detail.enablePaging && detail.useExternalPaging && detail.enableSorting && detail.useExternalSorting)))">
+-			<tr class="wf-grid-header-group-row">
+-				<th class="wf-grid-header-col" [attr.colspan]="detail.colDef.length"><span>{{detail.groupInfo.displayName}}</span></th>
+-			</tr>
+-			<tr class="wf-grid-header-group-row">
+-				<th class="wf-grid-header-col" *ngFor="let col of detail.colDef"><span *ngIf="col.value!=detail.groupInfo.field">{{col.header}}</span></th>
+-			</tr>
+-
+-			<tbody class="wf-grid-data-group-row" *ngFor="let rec of detail.data | groupBy: detail.groupInfo.field ">
+-				<tr>
+-					<td><wf-data-cell [value]="rec.key" [template]="detail.groupInfo.cellTemplate"></wf-data-cell></td>
++				<tr *ngFor="let row of dataRecords" class="wf-grid-data-group-row">
++					<td class="wf-grid-data-col" *ngFor="let col of colDef">
++						<wf-data-cell [name]="col.value" [value]="row[col.value]" [template]="col.cellTemplate" [row]="row" [col]="col.value"></wf-data-cell> 
++					</td>
+ 				</tr>
+-				<tr *ngFor="let row of rec.value ">
+-					<td class="wf-grid-data-col" *ngFor="let col of detail.colDef"><wf-data-cell [value]="row[col.value]" [template]="col.cellTemplate"></wf-data-cell></td>
+-				</tr>
+ 			</tbody>
+ 		</table>
+-		<!--Gird with only grouping Filter End-->
++		<!--Main Grid with out grouping End-->
+ 
+-		<!--Gird with only grouping and Paging enabled and using internal(Client Side) implementation for Paging-->
+-		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped"
+-			*ngIf="(detail.enableGrouping && detail.enablePaging && !detail.useExternalPaging && !(detail.enableSorting && !detail.useExternalSorting) )">
++		<!--Gird with grouping-->
++		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped" *ngIf="(detail.enableGrouping )">
+ 			<tr class="wf-grid-header-group-row">
+-				<th class="wf-grid-header-col" [attr.colspan]="detail.colDef.length"><span>{{detail.groupInfo.displayName}}</span></th>
++				<th class="wf-grid-header-col" [attr.colspan]="detail.colDef.length">
++					<span>{{detail.groupInfo.displayName}}</span>
++				</th>
+ 			</tr>
+ 			<tr class="wf-grid-header-group-row">
+-				<th class="wf-grid-header-col" *ngFor="let col of detail.colDef"><span *ngIf="col.value!=detail.groupInfo.field">{{col.header}}</span></th>
++				<th class="wf-grid-header-col" *ngFor="let col of detail.colDef">
++				<div  *ngIf="col.showCheckbox"><input type="checkbox" (change)="selectDeselectAll()" [(ngModel)]="col.isChecked" /></div>
++					<span>{{col.header}}</span>
++				</th>
+ 			</tr>
+-
+-			<tbody class="wf-grid-data-group-row" *ngFor="let rec of detail.data | groupBy: detail.groupInfo.field | slice:pager.pageStart-1 :pager.pageEnd    "><!-- To Review -->
++			<tbody class="wf-grid-data-group-row" *ngFor="let rec of dataRecords ">
+ 				<tr>
+-					<td>{{rec.key}}</td>
++					<td>
++						 <!-- <wf-data-cell [name]="rec.key" [value]="rec.key" [template]="colTmplate" [row]="rec.value" [col]="detail.groupInfo.field"></wf-data-cell>  -->
++					</td>
+ 				</tr>
+ 				<tr *ngFor="let row of rec.value ">
+-					<td class="wf-grid-data-col" *ngFor="let col of detail.colDef"><wf-data-cell [value]="row[col.value]" [template]="col.cellTemplate"></wf-data-cell></td>
++					<td class="wf-grid-data-col" *ngFor="let col of colDef">
++						 <wf-data-cell [name]="row[col.value]" [value]="row[col.value]" [template]="col.cellTemplate" [row]="row" [col]="col.value" ></wf-data-cell> 
++					</td>
+ 				</tr>
+ 			</tbody>
+ 		</table>
+-		<!--Gird with only grouping and Paging enabled and using internal(Client Side) implementation for Paging End-->
+-
+-		<!--Gird with only Paging enabled using internal(Client Side) implementation-->
+-		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped"
+-			*ngIf="(!detail.enableGrouping && detail.enablePaging && !detail.useExternalPaging && !(detail.enableSorting && !detail.useExternalSorting) )">
+-			<tr class="wf-grid-header-group-row">
+-				<th class="wf-grid-header-col" *ngFor="let col of detail.colDef">{{col.header}}</th>
+-			</tr>
+-			<tbody class="wf-grid-rows">
+-				<tr class="wf-grid-data-group-row" *ngFor="let row of detail.data |  slice:pager.pageStart-1 :pager.pageEnd ">
+-					<td class="wf-grid-data-col" *ngFor="let col of detail.colDef"><wf-data-cell [value]="row[col.value]" [template]="col.cellTemplate"></wf-data-cell></td>
+-				</tr>
+-			</tbody>
+-		</table>
+-		<!--Gird with only Paging enabled using internal(Client Side) implementation End-->
+-
+-		<!--Gird with only Sorting enabled using internal(Client Side) implementation -->
+-		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped"
+-			*ngIf="(detail.enableSorting && !detail.useExternalSorting  && !(detail.enablePaging && !detail.useExternalPaging))">
+-			<tr class="wf-grid-header-group-row">
+-				<th class="column-header sortable" *ngFor="let col of detail.colDef"><div *ngIf="col.sortable" (click)="sortColumn(col);" class="sort">
+-            <i class="icon-sort{{col.sortIcon}} icon-large default"></i>
+-          </div>{{col.header}}</th>
+-			</tr>
+-			<tbody class="wf-grid-rows">
+-				<tr class="wf-grid-data-group-row" *ngFor="let row of detail.data | orderBy: [orderByField]">
+-					<td class="wf-grid-data-col" *ngFor="let col of detail.colDef"><wf-data-cell [value]="row[col.value]" [template]="col.cellTemplate"></wf-data-cell></td>
+-				</tr>
+-			</tbody>
+-		</table>
+-		<!--Gird with only Sorting enabled using internal(Client Side) implementation End-->
+-
+-		<!--Default Gird with no additional ngFor Filters-->
+-		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped"
+-			*ngIf="(!detail.enableGrouping &&((!detail.enablePaging && !detail.enableSorting)||(!detail.enablePaging  && detail.enableSorting  && detail.useExternalSorting )||(!detail.enableSorting && detail.enablePaging && detail.useExternalPaging)||(detail.enablePaging && detail.useExternalPaging && detail.enableSorting && detail.useExternalSorting)))">
+-			<tr class="wf-grid-header-group-row">
+-		<th class="column-header sortable" *ngFor="let col of detail.colDef"><div *ngIf="col.sortable" (click)="sortColumn(col);" class="sort">
+-            <i class="icon-sort{{col.sortIcon}} icon-large default"></i>
+-          </div>{{col.header}}</th>
+-			</tr>
+-			<tbody class="wf-grid-rows">
+-				<tr class="wf-grid-data-group-row" *ngFor="let row of detail.data">
+-					<td class="wf-grid-data-col" *ngFor="let col of detail.colDef"><wf-data-cell [value]="row[col.value]" [template]="col.cellTemplate"></wf-data-cell></td>
+-				</tr>
+-			</tbody>
+-		</table>
+-		<!--Default Gird with no additional ngFor Filters End-->
+-
++		<!--Gird with grouping End-->
++		
+ 	</div>
+ 	<!-- Main Grid Section End-->
+-	
++
+ 	<!-- Pager bottom section -->
+ 	<div *ngIf="detail.enablePaging && detail.enablePagingBottom">
+-        <wf-grid-paging [pagerInfo]=detail.paging></wf-grid-paging>
+-  </div>
+-  <!-- Pager bottom section End-->
+-  
++		<wf-grid-paging [pagerInfo]=detail.paging></wf-grid-paging>
++	</div>
++	<!-- Pager bottom section End-->
++
+ </div>
+\ No newline at end of file
+Index: src/main/resources/angular_io/app/directives/wfGrid.directive.ts
+===================================================================
+--- src/main/resources/angular_io/app/directives/wfGrid.directive.ts	(revision 563715)
++++ src/main/resources/angular_io/app/directives/wfGrid.directive.ts	(working copy)
+@@ -1,28 +1,49 @@
+-import { Component, Input, OnInit, ElementRef, Output, EventEmitter} from '@angular/core';
++import { Component, Input, OnInit, ElementRef, Output, EventEmitter, AfterViewInit,ViewChild,ContentChildren, QueryList, AfterContentInit
++} from '@angular/core';
+ import {WFGridPager} from './wfGridPager.directive';
+ import {Column, GridOptions, Page, PagingOtions, SortInfo} from './WFGridUtil';
++import {OrderByService} from './orderBy.service';
++import {GroupByService} from './groupBy.service';
++import {ColumnComponent} from './wfColumn.component';
+ @Component({
+     selector: 'wf-grid',
+     templateUrl: 'angular_io/app/directives/wfGrid.directive.Template.html'
+ })
+ export class WFGrid implements OnInit {
++        @ContentChildren(ColumnComponent) colDef: QueryList<ColumnComponent>;  
+     pager: WFGridPager;
++    dataRecords: any[];
+     @Input() detail: GridOptions;
+     @Output('loader') loader = new EventEmitter();
+     tableBodyExpanded: boolean = true;
+     orderByField: string = '';
+     orderByDirection = '+';
+-
+     initPager(p: WFGridPager) {
+-        console.log("Grid initPager");
+         p.loader = this.loader;
+         p.useExternalPaging = this.detail.useExternalPaging;
+         this.pager = p;
++
+     }
+-
++  ngAfterContentInit() {
++        //todo
++    }
+     ngOnInit() {
+-        console.log(this.detail);
++        console.log("Alert fields: " + this.detail.data.length);
++        if (this.detail.enableGrouping) {
++            if (this.detail.enablePaging && !this.detail.useExternalPaging) {
++                this.detail.data = OrderByService._sort(this.detail.data, ['+' + this.detail.groupInfo.field]);
++                let sortedPage = this.detail.data.slice(this.detail.paging.startIndex - 1, this.detail.paging.endIndex);
++                this.dataRecords = GroupByService.groupBy(sortedPage, this.detail.groupInfo.field);
++            } else {
++                this.dataRecords = GroupByService.groupBy(this.detail.data, this.detail.groupInfo.field);
++            }
++        } else {
++            if (this.detail.enablePaging && !this.detail.useExternalPaging) {
++                this.dataRecords = this.detail.data.slice(this.detail.paging.startIndex - 1, this.detail.paging.endIndex);
++            }
++        }
+     }
++
+     sort(sortCol: Column): void {
+         if (sortCol.value == this.orderByField.substring(1, this.orderByField.length)) {
+             this.reverse(this.orderByDirection, sortCol);
+@@ -36,6 +57,13 @@
+         if (this.detail.useExternalSorting == true) {
+             this.setSortInfo(sortCol.value);
+             this.loader.emit();
++        } else {
++            if (this.detail.enablePaging && !this.detail.useExternalPaging) {
++                let sortedData: any[] = OrderByService._sort(this.detail.data, [this.orderByField]);
++                this.dataRecords = sortedData.slice(this.pager.pageStart - 1, this.pager.pageEnd);
++            } else {
++                this.dataRecords = OrderByService._sort(this.detail.data, [this.orderByField]);
++            }
+         }
+     }
+     reverse(direction: string, sortCol: Column): void {
+@@ -55,7 +83,7 @@
+         } else {
+             dir = 'asc';
+         }
+-        this.detail.sortInfo = { fields: [field], directions: [dir] }
++        this.detail.sortInfo = { fields: [field], directions: [dir] };
+     }
+     expandCollapse() {
+         if (this.tableBodyExpanded == true) {
+@@ -64,5 +92,15 @@
+             this.tableBodyExpanded = true;
+         }
+     }
++    groupingHandler() {
++        let sortedPage = this.detail.data.slice(this.pager.pageStart - 1, this.pager.pageEnd);
++        this.dataRecords = GroupByService.groupBy(sortedPage, this.detail.groupInfo.field);
++    }
++    selectDeselectAll(){
++        for (let row of this.dataRecords) {
++           // row.
++          console.log(row); // "4", "5", "6"
++     }
++    }
+ }
+ 
+Index: src/main/resources/angular_io/app/directives/wfGridPager.directive.ts
+===================================================================
+--- src/main/resources/angular_io/app/directives/wfGridPager.directive.ts	(revision 563715)
++++ src/main/resources/angular_io/app/directives/wfGridPager.directive.ts	(working copy)
+@@ -1,8 +1,10 @@
+ /**
+  * New typescript file
+  */
+-import { Component, Input, OnInit,Output,EventEmitter} from '@angular/core';
++import { Component, Input, AfterViewInit,Output,EventEmitter,OnInit} from '@angular/core';
+ import {WFGrid} from './wfGrid.directive';
++import {OrderByService} from './orderBy.service';
++import {GroupByService} from './groupBy.service';
+ import {Column,GridOptions,Page,PagingOtions,SortInfo} from './WFGridUtil';
+ @Component({
+     selector: 'wf-grid-paging',
+@@ -43,7 +45,7 @@
+     @Input() pagerInfo: PagingOtions;
+     loader = new EventEmitter();
+     pageSize: number = 5;
+-    pageSizeOptions = [5, 10, 25, 50, 75, 100]
++    pageSizeOptions = [5, 10, 25, 50, 75, 100];
+     currentPage: number = 1;
+     pageStart: number = 1;//current page start index
+     pageEnd: number;//current page end index
+@@ -71,15 +73,13 @@
+         this.totalRecords = this.pagerInfo.totalRecords;
+         this.pageSize = this.pagerInfo.rowsPerPage;
+         if (this.useExternalPaging == true) {
+-           
+             this.currentPage = this.pagerInfo.currentPage;
+             this.pageStart = this.pagerInfo.startIndex;
+             this.pageEnd = this.pagerInfo.endIndex;
+             this.totalNumOfPages = this.pagerInfo.totalPages;
+         } else {
+-           
+             this.calculateTotalPages();
+-            this.calculateStartAndEndIndex();
++            this.calculateStartAndEndIndexIntiall();
+         }
+ 
+         //called after the constructor and called  after the first ngOnChanges() 
+@@ -103,19 +103,39 @@
+         this.currentPage = 1;
+         this.calculateTotalPages();
+         this.calculateStartAndEndIndex();
++        this.calculateSmallLinks();
++        this.setLinkFlags();
+     }
+     calculateStartAndEndIndex(): void {
+         this.gotoPage = this.currentPage;
+-        this.pageEnd = this.currentPage * this.pageSize
++        this.pageEnd = this.currentPage * this.pageSize;
+         this.pageStart = this.pageEnd - (this.pageSize - 1);
+         if (this.useExternalPaging == true) {
+            this.pagerInfo.currentPage= this.currentPage  ;
+            this.pagerInfo.startIndex= this.pageStart  ;
+            this.pagerInfo.endIndex=this.pageEnd  ;
+             this.loader.emit();
++        }else{
++                 if (this.wfGrid.detail.enableGrouping) {
++                     this.wfGrid.groupingHandler();
++                 }else{
++                    this.wfGrid.dataRecords =this.wfGrid.detail.data.slice(this.pageStart-1,this.pageEnd);   
++                 } 
+         }
+          this.wfGrid.pager=this;
+     }
++        calculateStartAndEndIndexIntiall(): void {
++        this.gotoPage = this.currentPage;
++        this.pageEnd = this.currentPage * this.pageSize;
++        this.pageStart = this.pageEnd - (this.pageSize - 1);
++        if (this.useExternalPaging == true) {
++           this.pagerInfo.currentPage= this.currentPage  ;
++           this.pagerInfo.startIndex= this.pageStart  ;
++           this.pagerInfo.endIndex=this.pageEnd  ;
++            this.loader.emit();
++        }
++         this.wfGrid.pager=this;
++    }
+     setLinkFlags() {
+ 
+         if (this.pageEnd >= this.totalRecords) {
+@@ -198,4 +218,5 @@
+             this.setLinkFlags();
+         }
+     }
++
+ }
+Index: src/main/resources/angular_io/app/directives/WFGridUtil.ts
+===================================================================
+--- src/main/resources/angular_io/app/directives/WFGridUtil.ts	(revision 563715)
++++ src/main/resources/angular_io/app/directives/WFGridUtil.ts	(working copy)
+@@ -1,6 +1,7 @@
+ /**
+  * New typescript file
+  */
++import {EventEmitter} from '@angular/core';
+ export class Page {
+     id: number;
+     active: boolean;
+@@ -41,11 +42,17 @@
+ 
+ 
+ export class Column {
++//     constructor() {
++//         this.sortable=  false;
++//    }
+     value: string;
+     header: string;
+     sortable: boolean;
+     cellTemplate: string='<span>{{value}}</span>';
+     sortIcon:string='';
++    colHandler:  EventEmitter;
++    showCheckbox: boolean= false;
++    isChecked : boolean= false;
+ }
+ 
+ export class SortInfo {
+Index: src/main/resources/angular_io/app/directives/wfTab.directive.ts
+===================================================================
+--- src/main/resources/angular_io/app/directives/wfTab.directive.ts	(revision 563715)
++++ src/main/resources/angular_io/app/directives/wfTab.directive.ts	(working copy)
+@@ -3,7 +3,7 @@
+ }
+ from '@angular/core';
+ @Component({
+-    selector: 'wftab',
++    selector: 'wf-tab',
+     template: '<div [hidden]="!active"><ng-content></ng-content></div>'
+ })
+ export class WFTab {
+Index: src/main/resources/angular_io/app/directives/wfTabSet.directive.ts
+===================================================================
+--- src/main/resources/angular_io/app/directives/wfTabSet.directive.ts	(revision 563715)
++++ src/main/resources/angular_io/app/directives/wfTabSet.directive.ts	(working copy)
+@@ -1,7 +1,7 @@
+ import { Component, Input, OnChanges, ContentChildren, QueryList, AfterContentInit} from '@angular/core';
+ import { WFTab } from './wfTab.directive';
+ @Component({
+-    selector: 'wftabset',
++    selector: 'wf-tab-set',
+     template: '<div class="core-tabs">' +
+                  '<ul class="nav nav-tabs wf-tab-content tab-content" style="clear: both; min-width: 300px;" >' +
+                      '<li *ngFor="let tab of tabs"  [class.active]="tab.active" style="display:inline;" class="wf-tab-heading"  [class.disabled]="tab.disabled" >'+
+Index: src/main/resources/angular_io/app/main.ts
+===================================================================
+--- src/main/resources/angular_io/app/main.ts	(revision 563737)
++++ src/main/resources/angular_io/app/main.ts	(working copy)
+@@ -8,10 +8,16 @@
+ import { ResubmiteAppDataComponent } from './views/partial/eApp/resubmit-eAppForm.component';
+ import { ReruneAppFormComponent } from './views/partial/eApp/rerun-eAppForm.component';
+ 
++import { WFGridDemoComponent} from './demos/wfGrid.demo.component';
++import { WFTabSet} from './directives/wfTabSet.directive';
++import { WFTab} from './directives/wfTab.directive';
+ import { WFFilterDirective} from './directives/wfFilter.directive';
++import { WFCheckList} from './directives/wfCheckList.directive';
++// import { DeactiveLoanHoganService } from './views/partial/deactiveLoanHogan/deactive-loan-hogan.service';
++// import angular from '@types/angular';
++angular.module('core')
++    .directive('wfDemo', <any>upgradeAdapter.downgradeNg2Component(WFGridDemoComponent));
+ 
+- //import angular from '@types/angular';
+-
+ angular.module('core')
+     .directive('deactiveLoanHogan', <any>upgradeAdapter.downgradeNg2Component(DeactiveLoanHoganComponent));
+ 	
+@@ -28,6 +34,19 @@
+ 	
+ angular.module('core')
+   .directive('wffilter', <angular.IDirectiveFactory>upgradeAdapter.downgradeNg2Component(WFFilterDirective));
++angular.module('core')
++  .directive('wfComp', <angular.IDirectiveFactory>upgradeAdapter.downgradeNg2Component( WFCheckList));
+ 
++//angular.module('core')
++//  .directive('wftab', <any>upgradeAdapter.downgradeNg2Component({
++//    component: WFTab,
++//    inputs: ['tabTitle','active'],
++//    outputs: ['selectEvent','deselectEvent']
++//  } ));
++//
++//angular.module('core')
++//  .directive('wftabset', <any>upgradeAdapter.downgradeNg2Component({
++//    component: WFTab
++//  }));
+ 
+ upgradeAdapter.bootstrap(document.documentElement, ['core']);
+Index: src/main/resources/views/partials/common/menuTemplate.html
+===================================================================
+--- src/main/resources/views/partials/common/menuTemplate.html	(revision 563125)
++++ src/main/resources/views/partials/common/menuTemplate.html	(working copy)
+@@ -8,6 +8,7 @@
+ 	            <a><h4 class="panel-title">Production Support</h4></a>
+         </div>
+         <div class="panel-body collapse in" ng-show="!prodSupportCollapsed">
++           <div id="wfGridDemoItem"><a  href="" wf-core-url="/wfGridDemo">Angular 2 Demo</a></div>
+             <div id="editEmailTemplate"><a href="" wf-core-url="/editEmailTemplate">Edit Email Template</a></div>
+ 	        <div id="dealSearchMenuItem"><a href="" wf-core-url="/dealSearch">Deal Search</a></div>
+ 	        <div id="dealSummaryMenuItem"><a href="" wf-core-url="/dealSummary">Deal Summary</a></div>
