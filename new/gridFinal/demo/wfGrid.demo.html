@@ -1,0 +1,35 @@
+
+<div>
+	<div class="grid-label-big-lined">
+		<label>Angular 2 Demo </label>
+	</div>
+	
+	<wf-tab-set> 
+		<wf-tab [tabTitle]="'WF Grid Demo'" active="true">
+			<wf-grid [detail]="dataset" (loader)="alert()" (updater)="select($event)"> 
+				<group-column [value]="'country'" [header]="'Country'" > 
+					<template let-name="name" let-value="value"  #cellTemplate>
+						<a (click)="sayHi()"> {{value}}</a>
+					</template> 
+				</group-column> 
+				<column [value]="'selected'" [header]="" [showCheckbox]="true">
+					 <template let-name="name" let-row="row"  let-col="col" #cellTemplate>
+						<wf-checklist id="my" [rowObj]="row" [hidden]="false" [disable]="false" [list]="myList" [checked]="row.selected"></wf-checklist>
+					</template> 
+				</column> 
+				<column [value]="'id'" [header]="'Id'" [sortable]="true"> 
+					
+				</column> 
+				<column [value]="'city'" [header]="'City'" [isEditable]="true" > 
+					<template let-name="name" let-value="value" #cellTemplate>
+						<a contentEditable="true" (click)="sayHi()"> {{value}}</a>
+					</template>
+					<template let-name="name" let-value="value" #cellEditTemplate>
+						<input type="text" [value]="value" />
+					</template>  
+				</column> 
+			</wf-grid>
+		</wf-tab> 
+		<wf-tab [tabTitle]="'Tab2'"> tab2 Content </wf-tab> 
+	</wf-tab-set>
+</div>
