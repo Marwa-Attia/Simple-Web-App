@@ -1,0 +1,98 @@
+<div class="wf-grid-table">
+
+	<!-- Pager Section top -->
+	<div *ngIf="detail.enablePaging">
+		<wf-grid-paging [pagerInfo]=detail.paging></wf-grid-paging>
+	</div>
+	<!-- Pager Section top End-->
+
+	<!-- Header Section -->
+	<div class="table-header" *ngIf="!detail.hideHeader">
+		<span *ngIf="detail.enableTableExpandCollapse">
+			<a style="text-decoration: none; color: #ffffff;" (click)="expandCollapse()">
+				<span *ngIf="!tableBodyExpanded" class="icon-large default icon-expand"></span>
+				<span *ngIf="tableBodyExpanded" class="icon-large default icon-collapse"> </span>
+			</a>
+			<span class="title" [innerHTML]="detail.title"></span>
+		</span>
+		<span *ngIf="!detail.enableTableExpandCollapse" class="title" [innerHTML]="detail.title"></span>
+	</div>
+	<!-- Header section End -->
+
+	<!-- Main Grid Section-->
+	<div class="wf-table-body" *ngIf="(( detail.enableTableExpandCollapse && tableBodyExpanded) || !detail.enableTableExpandCollapse) && !detail.hideGrid">
+	
+		<!--Main Grid with out grouping -->
+		<table *ngIf="!detail.enableGrouping" class="wf-table-content table table-bordered table-hover table-condensed table-striped">
+			<tr class="wf-grid-header-group-row">
+				<th class="column-header sortable" *ngFor="let col of colDef">
+					<div  *ngIf="col.showCheckbox"><input type="checkbox" (change)="selectDeselectAll()" [(ngModel)]="selectAll" /></div>
+					<div *ngIf="detail.enableSorting && col.sortable" (click)="sortColumn(col);" class="sort">
+						<i class="icon-sort{{col.sortIcon}} icon-large default"></i>
+					</div>
+					{{col.header}}
+				</th>
+				<th class="wf-grid-header-edit-Col" *ngIf="detail.enableEdit"></th>
+			</tr>
+			<tbody class="wf-grid-data-group-row">
+				<tr *ngFor="let row of dataRecords;" class="wf-grid-data-group-row" wf-data-row inEditMode="false" #dRow>
+					<td class="wf-grid-data-col cell" *ngFor="let col of colDef; " >
+						<div  *ngIf="col.cellTemplate==null">{{row[col.value]}}</div>
+						<wf-data-cell  *ngIf="col.cellTemplate!=null && !(dRow.inEditMode &&  col.isEditable)" [name]="row[col.value]" [value]="row[col.value]" [template]="col.cellTemplate" [row]="row" [col]="col.value"></wf-data-cell> 
+					    <wf-data-cell  *ngIf="col.cellTemplate!=null && detail.enableEdit && col.isEditable && dRow.inEditMode" [name]="row[col.value]" [value]="row[col.value]" [template]="col.cellEditTemplate" [row]="row" [col]="col.value"  [(ngModel)]="row[col.value]" ngDefaultControl></wf-data-cell>
+					</td>
+					<td class="wf-grid-row-edit wf-grid-data-edit-col" *ngIf="detail.enableEdit" >
+						<button *ngIf="!dRow.inEditMode" (click)="enableEditing(dRow)">edit</button>
+						<button *ngIf="dRow.inEditMode" (click)="saveEdit(dRow)">save</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<!--Main Grid with out grouping End-->
+
+		<!--Gird with grouping-->
+		<table class="wf-table-content table table-bordered table-hover table-condensed table-striped" *ngIf="(detail.enableGrouping )">
+			<tr class="wf-grid-header-group-row">
+				<th class="wf-grid-header-col" [attr.colspan]="!detail.enableEdit ? colDef.length : colDef.length+1 ">
+					<span>{{groupInfo.header}}</span>
+				</th>
+			</tr>
+			<tr class="wf-grid-header-group-row">
+				<th class="wf-grid-header-col" *ngFor="let col of colDef">
+				<div  *ngIf="col.showCheckbox"><input type="checkbox" (change)="selectDeselectAll()" [(ngModel)]="selectAll" /></div>
+					<span>{{col.header}}</span>
+				</th>
+				<th class="wf-grid-header-edit-Col" *ngIf="detail.enableEdit"></th>
+			</tr>
+			<tbody class="wf-grid-data-group-row" *ngFor="let rec of dataRecords " >
+				<tr  class="cell">
+					<td class="cell" [attr.colspan]="!detail.enableEdit ? colDef.length : colDef.length+1 ">
+						  <wf-data-cell class="cell" [name]="rec.key" [value]="rec.key" [template]="groupInfo.cellTemplate" [row]="rec.value" [col]="groupInfo.value"></wf-data-cell> 
+					</td>
+				</tr>
+				<tr *ngFor="let row of rec.value; "  wf-data-row inEditMode="false" #dRow>
+					<td class="wf-grid-data-col cell" *ngFor="let col of colDef" >
+					     <div *ngIf="col.cellTemplate==null">{{row[col.value]}}</div>
+						<wf-data-cell *ngIf="col.cellTemplate!=null && !(dRow.inEditMode &&  col.isEditable)" [name]="row[col.value]" [value]="row[col.value]" [template]="col.cellTemplate" [row]="row" [col]="col.value"></wf-data-cell> 
+					    <wf-data-cell *ngIf="col.cellTemplate!=null && detail.enableEdit && col.isEditable && dRow.inEditMode" [name]="row[col.value]" [value]="row[col.value]" [(ngModel)]="row[col.value]" [template]="col.cellEditTemplate" [row]="row" [col]="col.value"  ngDefaultControl></wf-data-cell>
+					</td>
+					<td class="wf-grid-row-edit wf-grid-data-edit-col cell" *ngIf="detail.enableEdit" >
+					    <i *ngIf="!dRow.inEditMode" class="icon-edit ng-scope" (click)="enableEditing(dRow)"></i>
+						<button *ngIf="dRow.inEditMode" (click)="saveEdit(dRow,row)">Save</button>
+						<button *ngIf="dRow.inEditMode" (click)="cancelEdit(dRow)">Cancel</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<!--Gird with grouping End-->
+		
+	</div>
+	<!-- Main Grid Section End-->
+
+	<!-- Pager bottom section -->
+	<div *ngIf="detail.enablePaging && detail.enablePagingBottom">
+		<wf-grid-paging [pagerInfo]=detail.paging></wf-grid-paging>
+	</div>
+	<!-- Pager bottom section End-->
+
+</div>
